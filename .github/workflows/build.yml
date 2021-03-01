@@ -19,7 +19,10 @@ jobs:
       - name: copy
         run: cp ./Procfile ./deploy
       - name: ls
-        run: ls
+        run: |
+          ls
+          ls deploy
+          echo ${{secrets.HEROKU_EMAIL}}
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
