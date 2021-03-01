@@ -19,7 +19,7 @@ jobs:
       - name: copy
         run: cp ./Procfile ./deploy
       - name: ls
-          run: ls
+        run: ls
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
