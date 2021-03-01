@@ -19,14 +19,19 @@ jobs:
       - name: copy
         run: cp ./Procfile ./deploy
       - name: ls
-        run: |
-          ls
-          ls deploy
-          echo ${{secrets.HEROKU_EMAIL}}
+        run: ls
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
           heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
           heroku_email: ${{secrets.HEROKU_EMAIL}}
-          appdir: "deploy"
+          justlogin: true
+      - run: |
+          cd deploy
+          git init
+          git config --global user.name "admin"
+          git config --global user.email "admin@examples.com"
+          git add .
+          git commit -m init
+          git push heroku master
