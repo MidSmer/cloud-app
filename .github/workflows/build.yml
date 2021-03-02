@@ -15,7 +15,7 @@ jobs:
         with:
           go-version: 1.15
       - name: Build
-        run: CGO_ENABLED=0 go build -o deploy/main
+        run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o deploy/main
       - name: ls
         run: |
           cp ./Dockerfile ./deploy
@@ -29,6 +29,5 @@ jobs:
           dontautocreate: true
           usedocker: true
           appdir: deploy
-      - name: SSH connection to Actions
-        uses: P3TERX/ssh2actions@v1.0.0
+    
           
