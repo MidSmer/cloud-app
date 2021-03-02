@@ -15,20 +15,11 @@ jobs:
         with:
           go-version: 1.15
       - name: Build
-        run: go build -o deploy/main
+        run: go build -o deploy/bin/main
       - name: copy
         run: cp ./Procfile ./deploy
       - name: ls
         run: ls
-      - shell: bash
-        env:
-          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
-        run: |
-          cd deploy
-          git init
-          git config user.name "Heroku-Deploy"
-          git config user.email "$HEROKU_EMAIL"
-          git add . && git commit -m init
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
@@ -36,4 +27,5 @@ jobs:
           heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
           heroku_email: ${{secrets.HEROKU_EMAIL}}
           dontautocreate: true
+          appdir: deploy
           
