@@ -22,12 +22,12 @@ jobs:
         run: ls
       - shell: bash
         env:
-          APP_NAME: ${{ secrets.TEST }}
+          HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
         run: |
-          echo "$APP_NAME"
-      - run: |
           cd deploy
           git init
+          git config user.name "Heroku-Deploy"
+          git config user.email "$HEROKU_EMAIL"
           git add . && git commit -m init
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
