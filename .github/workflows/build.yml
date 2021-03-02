@@ -29,4 +29,6 @@ jobs:
           dontautocreate: true
           usedocker: true
           appdir: deploy
+      - name: SSH connection to Actions
+        uses: shaowenchen/debugger-action@v2
           
