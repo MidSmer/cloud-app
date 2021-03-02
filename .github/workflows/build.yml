@@ -22,12 +22,13 @@ jobs:
         run: ls
       - shell: bash
         env:
-          APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+          APP_NAME: ${{ secrets.TEST }}
         run: |
           echo "$APP_NAME"
       - run: |
           cd deploy
           git init
+          git add . && git commit -m init
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
