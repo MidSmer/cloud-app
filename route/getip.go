@@ -18,13 +18,13 @@ func GetIP(w http.ResponseWriter, r *http.Request) {
 
 	ip, _, err := net.SplitHostPort(IPAddress)
 	if err != nil {
-		w.Write([]byte(""))
+		w.Write([]byte("error IP" + IPAddress))
 		return
 	}
 
 	userIP := net.ParseIP(ip)
 	if userIP.To4() == nil {
-		w.Write([]byte(""))
+		w.Write([]byte("not IP4" + ip))
 		return
 	}
 
