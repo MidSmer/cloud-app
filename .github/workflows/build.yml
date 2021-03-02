@@ -17,7 +17,9 @@ jobs:
       - name: Build
         run: go build -o deploy/main
       - name: ls
-        run: ls
+        run: |
+          cp ./Dockerfile ./deploy
+          ls ./deploy
       - name: Deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
