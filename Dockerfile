@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-ADD ./deploy /opt/webapp/
+ADD . /opt/webapp/
 WORKDIR /opt/webapp
 
 # Run the image as a non-root user
