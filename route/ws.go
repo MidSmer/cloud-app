@@ -5,6 +5,8 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"time"
+
+	_ "v2ray.com/core/transport/internet/websocket"
 )
 
 var (
@@ -25,9 +27,11 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//defer conn.Close()
-
 	handler, err := core.NewWebsocketInboundHandler()
-	handler.Start(w, r, conn)
+	if err != nil {
+		Logger.Error("web socket inbound handler create fail!", err)
+		return
+	}
 
+	handler.Start(w, r, conn)
 }

@@ -1,14 +1,7 @@
 package core
 
 import (
-	"reflect"
-	"unsafe"
-
 	"context"
-	"crypto/md5"
-	"encoding/binary"
-	"hash"
-	"hash/fnv"
 	"io"
 	"strings"
 	"sync"
@@ -16,14 +9,11 @@ import (
 	"v2ray.com/core/app/proxyman"
 	app_inbound "v2ray.com/core/app/proxyman/inbound"
 	"v2ray.com/core/common"
-	"v2ray.com/core/common/bitmask"
 	"v2ray.com/core/common/buf"
-	"v2ray.com/core/common/crypto"
 	"v2ray.com/core/common/errors"
 	"v2ray.com/core/common/log"
 	"v2ray.com/core/common/net"
 	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/serial"
 	"v2ray.com/core/common/session"
 	"v2ray.com/core/common/signal"
 	"v2ray.com/core/common/task"
@@ -36,138 +26,6 @@ import (
 	"v2ray.com/core/proxy/vmess/inbound"
 	"v2ray.com/core/transport/internet"
 )
-
-func hashTimestamp(h hash.Hash, t protocol.Timestamp) []byte {
-	common.Must2(serial.WriteUint64(h, uint64(t)))
-	common.Must2(serial.WriteUint64(h, uint64(t)))
-	common.Must2(serial.WriteUint64(h, uint64(t)))
-	common.Must2(serial.WriteUint64(h, uint64(t)))
-	return h.Sum(nil)
-}
-
-func parseSecurityType(b byte) protocol.SecurityType {
-	if _, f := protocol.SecurityType_name[int32(b)]; f {
-		st := protocol.SecurityType(b)
-		// For backward compatibility.
-		if st == protocol.SecurityType_UNKNOWN {
-			st = protocol.SecurityType_LEGACY
-		}
-		return st
-	}
-	return protocol.SecurityType_UNKNOWN
-}
-
-var addrParser = protocol.NewAddressParser(
-	protocol.AddressFamilyByte(byte(protocol.AddressTypeIPv4), net.AddressFamilyIPv4),
-	protocol.AddressFamilyByte(byte(protocol.AddressTypeDomain), net.AddressFamilyDomain),
-	protocol.AddressFamilyByte(byte(protocol.AddressTypeIPv6), net.AddressFamilyIPv6),
-	protocol.PortThenAddress(),
-)
-
-// DecodeRequestHeader decodes and returns (if successful) a RequestHeader from an input stream.
-func DecodeRequestHeader(svrSession *encoding.ServerSession ,reader io.Reader) (*protocol.RequestHeader, error) {
-	svrSessionPointerRef := reflect.TypeOf(svrSession)
-
-	buffer := buf.New()
-	defer buffer.Release()
-
-	if _, err := buffer.ReadFullFrom(reader, protocol.IDBytesLen); err != nil {
-		return nil, newError("failed to read request header").Base(err)
-	}
-
-	timestamp := protocol.Timestamp(time.Now().Unix())
-	user := &protocol.MemoryUser{}
-
-	iv := hashTimestamp(md5.New(), timestamp)
-	vmessAccount := user.Account.(*vmess.MemoryAccount)
-
-	aesStream := crypto.NewAesDecryptionStream(vmessAccount.ID.CmdKey(), iv[:])
-	decryptor := crypto.NewCryptionReader(aesStream, reader)
-
-	buffer.Clear()
-	if _, err := buffer.ReadFullFrom(decryptor, 38); err != nil {
-		return nil, newError("failed to read request header").Base(err)
-	}
-
-	request := &protocol.RequestHeader{
-		User:    user,
-		Version: buffer.Byte(0),
-	}
-
-	requestBodyIVType, ok := svrSessionPointerRef.FieldByName("requestBodyIV")
-	if !ok {
-		return nil, newError("failed to read requestBodyIV")
-	}
-	requestBodyIV := (*[16]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(svrSession)) + requestBodyIVType.Offset))
-	requestBodyKeyType, ok := svrSessionPointerRef.FieldByName("requestBodyKey")
-	if !ok {
-		return nil, newError("failed to read requestBodyIV")
-	}
-	requestBodyKey := (*[16]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(svrSession)) + requestBodyKeyType.Offset))
-
-	copy(requestBodyIV[:], buffer.BytesRange(1, 17))   // 16 bytes
-	copy(requestBodyKey[:], buffer.BytesRange(17, 33)) // 16 bytes
-	//var sid sessionId
-	//copy(sid.user[:], vmessAccount.ID.Bytes())
-	//sid.key = s.requestBodyKey
-	//sid.nonce = s.requestBodyIV
-	//if !s.sessionHistory.addIfNotExits(sid) {
-	//	return nil, newError("duplicated session id, possibly under replay attack")
-	//}
-
-	responseHeaderType, ok := svrSessionPointerRef.FieldByName("responseHeader")
-	if !ok {
-		return nil, newError("failed to read requestBodyIV")
-	}
-	responseHeader := (*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(svrSession)) + responseHeaderType.Offset))
-
-	*responseHeader = buffer.Byte(33)             // 1 byte
-	request.Option = bitmask.Byte(buffer.Byte(34)) // 1 byte
-	padingLen := int(buffer.Byte(35) >> 4)
-	request.Security = parseSecurityType(buffer.Byte(35) & 0x0F)
-	// 1 bytes reserved
-	request.Command = protocol.RequestCommand(buffer.Byte(37))
-
-	switch request.Command {
-	case protocol.RequestCommandMux:
-		request.Address = net.DomainAddress("v1.mux.cool")
-		request.Port = 0
-	case protocol.RequestCommandTCP, protocol.RequestCommandUDP:
-		if addr, port, err := addrParser.ReadAddressPort(buffer, decryptor); err == nil {
-			request.Address = addr
-			request.Port = port
-		}
-	}
-
-	if padingLen > 0 {
-		if _, err := buffer.ReadFullFrom(decryptor, int32(padingLen)); err != nil {
-			return nil, newError("failed to read padding").Base(err)
-		}
-	}
-
-	if _, err := buffer.ReadFullFrom(decryptor, 4); err != nil {
-		return nil, newError("failed to read checksum").Base(err)
-	}
-
-	fnv1a := fnv.New32a()
-	common.Must2(fnv1a.Write(buffer.BytesTo(-4)))
-	actualHash := fnv1a.Sum32()
-	expectedHash := binary.BigEndian.Uint32(buffer.BytesFrom(-4))
-
-	if actualHash != expectedHash {
-		return nil, newError("invalid auth")
-	}
-
-	if request.Address == nil {
-		return nil, newError("invalid remote address")
-	}
-
-	if request.Security == protocol.SecurityType_UNKNOWN || request.Security == protocol.SecurityType_AUTO {
-		return nil, newError("unknown security type: ", request.Security)
-	}
-
-	return request, nil
-}
 
 //vmess
 
