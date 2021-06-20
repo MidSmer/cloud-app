@@ -5,8 +5,6 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"time"
-
-	_ "v2ray.com/core/transport/internet/websocket"
 )
 
 var (

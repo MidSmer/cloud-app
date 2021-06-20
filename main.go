@@ -29,6 +29,7 @@ func main() {
 	router.HandleFunc("/", route.ServeHome)
 	router.HandleFunc("/ws", route.WS)
 	router.HandleFunc("/get-ip", route.GetIP)
+	router.HandleFunc("/get-info", route.GetInfo)
 	http.Handle("/", router)
 	httpErr := http.ListenAndServe(":"+port, nil)
 	if httpErr != nil {

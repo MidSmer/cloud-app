@@ -2,10 +2,13 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 	"v2ray.com/core/app/proxyman"
 	app_inbound "v2ray.com/core/app/proxyman/inbound"
 	"v2ray.com/core/common"
@@ -217,6 +220,15 @@ func (h *VmessInboundHandler) Process(ctx context.Context, network net.Network, 
 	reader := &buf.BufferedReader{Reader: buf.NewReader(connection)}
 	svrSession := encoding.NewServerSession(h.clients, h.sessionHistory)
 	request, err := svrSession.DecodeRequestHeader(reader)
+
+	typeOfSess := reflect.TypeOf(svrSession)
+	if typeOfSess.Kind() == reflect.Ptr {
+		typeOfSess = typeOfSess.Elem()
+	}
+	if bodyKeyType, ok := typeOfSess.FieldByName("requestBodyKey"); ok {
+		requestBodyKey := (*[16]byte)(unsafe.Pointer(uintptr(unsafe.Pointer(svrSession)) + bodyKeyType.Offset))
+		fmt.Println(requestBodyKey[:])
+	}
 
 	if err != nil {
 		if errors.Cause(err) != io.EOF {

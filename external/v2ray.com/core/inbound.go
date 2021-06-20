@@ -3,9 +3,7 @@ package core
 import (
 	"context"
 	"v2ray.com/core/app/dispatcher"
-	"v2ray.com/core/common/protocol"
 	"v2ray.com/core/features/policy"
-	"v2ray.com/core/proxy/vmess"
 	"v2ray.com/core/proxy/vmess/inbound"
 
 	"v2ray.com/core/common/net"
@@ -14,6 +12,8 @@ import (
 	"v2ray.com/core/features/stats"
 	"v2ray.com/core/transport/internet"
 	"v2ray.com/core/transport/internet/tcp"
+
+	_ "v2ray.com/core/transport/internet/websocket"
 )
 
 type worker interface {
@@ -88,16 +88,10 @@ func (w *tcpWorker) callback(conn internet.Connection) {
 		return
 	}
 
-	account, err := (&vmess.Account{Id: "129ef4a2-cdf4-4f00-bc78-c0211d373ad8", AlterId: 64}).AsAccount()
-	if err != nil {
-		newError("failed create vmess account").Base(err).WriteToLog(session.ExportIDToError(ctx))
-		return
+	accountManager := GetAccountManagerInstance()
+	for _, a := range accountManager.Get() {
+		vmessInbound.AddUser(ctx, a)
 	}
-	memoryUser := &protocol.MemoryUser{
-		Account: account,
-	}
-
-	vmessInbound.AddUser(ctx, memoryUser)
 
 	err = vmessInbound.Process(ctx, net.Network_TCP, conn, w.dispatcher)
 	if err != nil {
@@ -147,8 +141,8 @@ func NewInboundHandler(ctx context.Context) (*tcpWorker, error) {
 	}
 
 	worker := &tcpWorker{
-		address:         net.AnyIP,
-		port:            net.Port(80),
+		//address:         net.AnyIP,
+		//port:            net.Port(80),
 		stream:          mss,
 		recvOrigDest:    false,
 		dispatcher:      dp,
