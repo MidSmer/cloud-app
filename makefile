@@ -1,10 +1,7 @@
-all: main setting install build-web
+all: main install build-web
 
 main:
-	CGO_ENABLED=0 go build -o deploy/main
-
-setting:
-	cp config.toml deploy/
+	CGO_ENABLED=0 go build -o main
 
 install:
 	cd web; \
@@ -15,6 +12,8 @@ build-web:
 	yarn build
 
 clean:
+	rm main
 	rm -rf deploy
+	rm -rf public
 
 .PHONY: all main install build-web clean

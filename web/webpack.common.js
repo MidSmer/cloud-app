@@ -11,7 +11,7 @@ module.exports = {
     },
     output: {
         filename: 'static/[contenthash].js',
-        path: path.resolve(__dirname, '..', 'deploy', 'public'),
+        path: path.resolve(__dirname, '..', 'public'),
         publicPath: '/',
     },
     plugins: [

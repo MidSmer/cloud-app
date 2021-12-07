@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "cross-env NODE_ENV=production webpack --config webpack.prod.js",
+    "build": "cross-env NODE_ENV=production NODE_OPTIONS=--openssl-legacy-provider webpack --config webpack.prod.js",
     "serve": "cross-env NODE_ENV=development webpack serve --config webpack.dev.js",
     "build-dev": "cross-env NODE_ENV=development webpack --config webpack.dev.js"
   },

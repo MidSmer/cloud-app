@@ -18,6 +18,10 @@ jobs:
         run: make
       - name: ls
         run: |
+          mkdir deploy
+          cp ./main ./deploy
+          cp -r ./public ./deploy/public
+          cp ./config.toml ./deploy
           cp ./Dockerfile ./deploy
           ls ./deploy
       - name: Deploy
