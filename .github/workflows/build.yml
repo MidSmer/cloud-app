@@ -16,22 +16,5 @@ jobs:
           go-version: 1.15
       - name: Build
         run: make
-      - name: ls
-        run: |
-          mkdir deploy
-          cp ./main ./deploy
-          cp -r ./public ./deploy/public
-          cp ./config.toml ./deploy
-          cp ./Dockerfile ./deploy
-          ls ./deploy
-      - name: Deploy
-        uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
-          heroku_email: ${{secrets.HEROKU_EMAIL}}
-          dontautocreate: true
-          usedocker: true
-          appdir: deploy
     
           
