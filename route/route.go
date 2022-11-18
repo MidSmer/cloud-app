@@ -1,9 +1,10 @@
 package route
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 var (
@@ -111,6 +112,14 @@ var routes = Routes{
 		"/get-info",
 		false,
 		GetInfo,
+		true,
+	},
+	Route{
+		"GetHead",
+		[]string{"GET", "POST"},
+		"/get-head",
+		false,
+		GetHead,
 		true,
 	},
 	Route{

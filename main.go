@@ -1,12 +1,13 @@
 package main
 
 import (
+	"net/http"
+	"os"
+
 	"github.com/MidSmer/cloud-app/db"
 	"github.com/MidSmer/cloud-app/route"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"net/http"
-	"os"
 )
 
 var (
