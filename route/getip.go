@@ -11,6 +11,9 @@ func GetIP(w http.ResponseWriter, r *http.Request) {
 
 	IPAddress := r.Header.Get("X-Real-Ip")
 	if IPAddress == "" {
+		IPAddress = r.Header.Get("True-Client-Ip")
+	}
+	if IPAddress == "" {
 		IPAddress = r.Header.Get("X-Forwarded-For")
 	}
 	if IPAddress == "" {
