@@ -4,12 +4,12 @@ main:
 	CGO_ENABLED=0 go build -o main
 
 install:
-	cd web; \
-	yarn install
+	cd web/react-app; \
+	npm install
 
 build-web:
-	cd web; \
-	yarn build
+	cd web/react-app; \
+	npm run build
 
 clean:
 	rm main

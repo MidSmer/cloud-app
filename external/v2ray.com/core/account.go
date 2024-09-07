@@ -2,9 +2,10 @@ package core
 
 import (
 	"sync"
-	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/uuid"
-	"v2ray.com/core/proxy/vmess"
+
+	"github.com/v2fly/v2ray-core/v5/common/protocol"
+	"github.com/v2fly/v2ray-core/v5/common/uuid"
+	"github.com/v2fly/v2ray-core/v5/proxy/vmess"
 )
 
 type accountManager struct {

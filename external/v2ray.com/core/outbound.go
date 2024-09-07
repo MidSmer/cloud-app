@@ -2,23 +2,24 @@ package core
 
 import (
 	"context"
-	"v2ray.com/core/common/serial"
-	"v2ray.com/core/features/dns/localdns"
-	"v2ray.com/core/features/policy"
-	"v2ray.com/core/proxy/freedom"
 
-	"v2ray.com/core"
-	"v2ray.com/core/app/proxyman"
-	proxymanOutbound "v2ray.com/core/app/proxyman/outbound"
-	"v2ray.com/core/common"
-	"v2ray.com/core/common/mux"
-	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/session"
-	"v2ray.com/core/features/outbound"
-	"v2ray.com/core/proxy"
-	"v2ray.com/core/transport"
-	"v2ray.com/core/transport/internet"
-	"v2ray.com/core/transport/pipe"
+	core "github.com/v2fly/v2ray-core/v5"
+	"github.com/v2fly/v2ray-core/v5/common/serial"
+	"github.com/v2fly/v2ray-core/v5/features/dns/localdns"
+	"github.com/v2fly/v2ray-core/v5/features/policy"
+	"github.com/v2fly/v2ray-core/v5/proxy/freedom"
+
+	"github.com/v2fly/v2ray-core/v5/app/proxyman"
+	proxymanOutbound "github.com/v2fly/v2ray-core/v5/app/proxyman/outbound"
+	"github.com/v2fly/v2ray-core/v5/common"
+	"github.com/v2fly/v2ray-core/v5/common/mux"
+	"github.com/v2fly/v2ray-core/v5/common/net"
+	"github.com/v2fly/v2ray-core/v5/common/session"
+	"github.com/v2fly/v2ray-core/v5/features/outbound"
+	"github.com/v2fly/v2ray-core/v5/proxy"
+	"github.com/v2fly/v2ray-core/v5/transport"
+	"github.com/v2fly/v2ray-core/v5/transport/internet"
+	"github.com/v2fly/v2ray-core/v5/transport/pipe"
 )
 
 // OutboundHandler is an implements of outbound.OutboundHandler.
@@ -38,7 +39,7 @@ func NewOutboundHandler(ctx context.Context, config *core.OutboundHandlerConfig)
 	}
 
 	if config.SenderSettings != nil {
-		senderSettings, err := config.SenderSettings.GetInstance()
+		senderSettings, err := serial.GetInstanceOf(config.SenderSettings)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +56,7 @@ func NewOutboundHandler(ctx context.Context, config *core.OutboundHandlerConfig)
 		}
 	}
 
-	proxyConfig, err := config.ProxySettings.GetInstance()
+	proxyConfig, err := serial.GetInstanceOf(config.ProxySettings)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +98,13 @@ func NewOutboundManager(ctx context.Context) (*proxymanOutbound.Manager, error) 
 
 	handler, err := NewOutboundHandler(ctx, &core.OutboundHandlerConfig{
 		Tag:            "",
-		SenderSettings: &serial.TypedMessage{Type: "v2ray.core.app.proxyman.SenderConfig"},
-		ProxySettings:  &serial.TypedMessage{Type: "v2ray.core.proxy.freedom.Config"},
+		SenderSettings: serial.ToTypedMessage(&proxyman.SenderConfig{}),
+		ProxySettings:  serial.ToTypedMessage(&freedom.Config{}),
 	})
+	if err != nil {
+		return nil, err
+	}
+
 	err = manager.AddHandler(ctx, handler)
 	if err != nil {
 		return nil, err

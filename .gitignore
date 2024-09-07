@@ -1,6 +1,9 @@
 .idea
 .cache
 .config
+.ash_history
+.bash_history
+/.vscode
 
 main
 /deploy

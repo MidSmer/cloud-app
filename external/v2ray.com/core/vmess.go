@@ -9,25 +9,26 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-	"v2ray.com/core/app/proxyman"
-	app_inbound "v2ray.com/core/app/proxyman/inbound"
-	"v2ray.com/core/common"
-	"v2ray.com/core/common/buf"
-	"v2ray.com/core/common/errors"
-	"v2ray.com/core/common/log"
-	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/session"
-	"v2ray.com/core/common/signal"
-	"v2ray.com/core/common/task"
-	"v2ray.com/core/common/uuid"
-	feature_inbound "v2ray.com/core/features/inbound"
-	"v2ray.com/core/features/policy"
-	"v2ray.com/core/features/routing"
-	"v2ray.com/core/proxy/vmess"
-	"v2ray.com/core/proxy/vmess/encoding"
-	"v2ray.com/core/proxy/vmess/inbound"
-	"v2ray.com/core/transport/internet"
+
+	"github.com/v2fly/v2ray-core/v5/app/proxyman"
+	app_inbound "github.com/v2fly/v2ray-core/v5/app/proxyman/inbound"
+	"github.com/v2fly/v2ray-core/v5/common"
+	"github.com/v2fly/v2ray-core/v5/common/buf"
+	"github.com/v2fly/v2ray-core/v5/common/errors"
+	"github.com/v2fly/v2ray-core/v5/common/log"
+	"github.com/v2fly/v2ray-core/v5/common/net"
+	"github.com/v2fly/v2ray-core/v5/common/protocol"
+	"github.com/v2fly/v2ray-core/v5/common/session"
+	"github.com/v2fly/v2ray-core/v5/common/signal"
+	"github.com/v2fly/v2ray-core/v5/common/task"
+	"github.com/v2fly/v2ray-core/v5/common/uuid"
+	feature_inbound "github.com/v2fly/v2ray-core/v5/features/inbound"
+	"github.com/v2fly/v2ray-core/v5/features/policy"
+	"github.com/v2fly/v2ray-core/v5/features/routing"
+	"github.com/v2fly/v2ray-core/v5/proxy/vmess"
+	"github.com/v2fly/v2ray-core/v5/proxy/vmess/encoding"
+	"github.com/v2fly/v2ray-core/v5/proxy/vmess/inbound"
+	"github.com/v2fly/v2ray-core/v5/transport/internet"
 )
 
 //vmess
@@ -175,7 +176,10 @@ func (h *VmessInboundHandler) RemoveUser(ctx context.Context, email string) erro
 func transferResponse(timer signal.ActivityUpdater, session *encoding.ServerSession, request *protocol.RequestHeader, response *protocol.ResponseHeader, input buf.Reader, output *buf.BufferedWriter) error {
 	session.EncodeResponseHeader(response, output)
 
-	bodyWriter := session.EncodeResponseBody(request, output)
+	bodyWriter, err := session.EncodeResponseBody(request, output)
+	if err != nil {
+		return newError("failed to start decoding response").Base(err)
+	}
 
 	{
 		// Optimize for small response packet
@@ -288,7 +292,10 @@ func (h *VmessInboundHandler) Process(ctx context.Context, network net.Network, 
 	requestDone := func() error {
 		defer timer.SetTimeout(sessionPolicy.Timeouts.DownlinkOnly)
 
-		bodyReader := svrSession.DecodeRequestBody(request, reader)
+		bodyReader, err := svrSession.DecodeRequestBody(request, reader)
+		if err != nil {
+			return newError("failed to start decoding").Base(err)
+		}
 		if err := buf.Copy(bodyReader, link.Writer, buf.UpdateActivity(timer)); err != nil {
 			return newError("failed to transfer request").Base(err)
 		}

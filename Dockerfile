@@ -1,5 +1,5 @@
 # go build
-FROM golang:1.19-alpine3.15 as builder
+FROM golang:1.22-alpine3.20 as builder
 
 WORKDIR /build
 
@@ -8,18 +8,18 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
 # web pack
-FROM node:18 as webpack
+FROM node:20 as webpack
 
 WORKDIR /build
 
-COPY ./web ./web
+COPY ./web/react-app ./web/react-app
 
-RUN cd ./web \
-    && yarn install \
-    && yarn build
+RUN cd ./web/react-app \
+    && npm install \
+    && npm run build
 
 # deploy
-FROM alpine:3.15 as deploy
+FROM alpine:3.20 as deploy
 
 WORKDIR /root
 

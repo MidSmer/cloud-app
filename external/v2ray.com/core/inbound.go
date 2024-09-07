@@ -2,18 +2,19 @@ package core
 
 import (
 	"context"
-	"v2ray.com/core/app/dispatcher"
-	"v2ray.com/core/features/policy"
-	"v2ray.com/core/proxy/vmess/inbound"
 
-	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/session"
-	"v2ray.com/core/features/routing"
-	"v2ray.com/core/features/stats"
-	"v2ray.com/core/transport/internet"
-	"v2ray.com/core/transport/internet/tcp"
+	"github.com/v2fly/v2ray-core/v5/app/dispatcher"
+	"github.com/v2fly/v2ray-core/v5/features/policy"
+	"github.com/v2fly/v2ray-core/v5/proxy/vmess/inbound"
 
-	_ "v2ray.com/core/transport/internet/websocket"
+	"github.com/v2fly/v2ray-core/v5/common/net"
+	"github.com/v2fly/v2ray-core/v5/common/session"
+	"github.com/v2fly/v2ray-core/v5/features/routing"
+	"github.com/v2fly/v2ray-core/v5/features/stats"
+	"github.com/v2fly/v2ray-core/v5/transport/internet"
+	"github.com/v2fly/v2ray-core/v5/transport/internet/tcp"
+
+	_ "github.com/v2fly/v2ray-core/v5/transport/internet/websocket"
 )
 
 type worker interface {
@@ -74,9 +75,9 @@ func (w *tcpWorker) callback(conn internet.Connection) {
 	ctx = session.ContextWithContent(ctx, content)
 	if w.uplinkCounter != nil || w.downlinkCounter != nil {
 		conn = &internet.StatCouterConnection{
-			Connection: conn,
-			Uplink:     w.uplinkCounter,
-			Downlink:   w.downlinkCounter,
+			Connection:   conn,
+			ReadCounter:  w.uplinkCounter,
+			WriteCounter: w.downlinkCounter,
 		}
 	}
 

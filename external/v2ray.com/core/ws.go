@@ -2,10 +2,11 @@ package core
 
 import (
 	"context"
-	"github.com/gorilla/websocket"
 	"net/http"
-	"v2ray.com/core/common/net"
-	httpProto "v2ray.com/core/common/protocol/http"
+
+	"github.com/gorilla/websocket"
+	"github.com/v2fly/v2ray-core/v5/common/net"
+	httpProto "github.com/v2fly/v2ray-core/v5/common/protocol/http"
 )
 
 type Connection interface {
